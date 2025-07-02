@@ -27,6 +27,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS Restaurant (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            phone TEXT
             menu TEXT,  -- 存 JSON 字串
             active BOOLEAN DEFAULT 1
         );
@@ -63,6 +64,7 @@ def insert_default_restaurants():
     default_restaurants = [
         {
             "name": "貳捌伍",
+            "phone": "07-1234567",
             "menu": {
                 "吊燒雞腿便當": 120,
                 "秘製烤雞肉便當": 100,
@@ -74,6 +76,7 @@ def insert_default_restaurants():
         },
         {
             "name": "健康那件小事",
+            "phone": "07-7654321",
             "menu": {
                 "蒜香牛奶嫩雞胸": 115,
                 "泰式塔香打拋豬": 110,
@@ -83,6 +86,7 @@ def insert_default_restaurants():
         },
         {
             "name": "鈴蘭美食",
+            "phone": "07-9876543",
             "menu": {
                 "香酥雞腿飯": 85,
                 "排骨飯": 70,
@@ -102,44 +106,9 @@ def insert_default_restaurants():
     conn.close()
     print("✅ 預設餐廳建立完成")
 
-def insert_test_orders():
-    conn = sqlite3.connect("group_order.db")
-    cursor = conn.cursor()
 
-    user_id = "U_TEST123"
-    user_name = "測試用戶"
-
-    # 確保 User 資料存在
-    cursor.execute("INSERT OR IGNORE INTO User (id, name, created_at) VALUES (?, ?, datetime('now'))", (user_id, user_name))
-
-    # 取得「鈴蘭美食」餐廳 ID
-    cursor.execute("SELECT id FROM Restaurant WHERE name = ?", ("鈴蘭美食",))
-    row = cursor.fetchone()
-    if not row:
-        print("❌ 鈴蘭美食餐廳不存在")
-        return
-    restaurant_id = row[0]
-
-    # 模擬幾筆點餐記錄
-    orders = [
-        ("香酥雞腿飯", 2),
-        ("雞排飯", 1),
-        ("香酥雞腿飯", 1),
-        ("排骨飯", 3),
-    ]
-
-    for item, qty in orders:
-        cursor.execute("""
-            INSERT INTO OrderRecord (user_id, restaurant_id, item, quantity, created_at)
-            VALUES (?, ?, ?, ?, datetime('now', '-5 days'))
-        """, (user_id, restaurant_id, item, qty))
-
-    conn.commit()
-    conn.close()
-    print("✅ 測試點餐紀錄建立完成")
 
 
 if __name__ == "__main__":
     init_db()
     insert_default_restaurants()
-    insert_test_orders()
