@@ -290,7 +290,7 @@ def handle_message(event):
                 try:
                         conn = sqlite3.connect("group_order.db")
                         cursor = conn.cursor()
-                        cursor.execute("SELECT phone FROM Restaurant WHERE name = ?", (restaurant_name,))
+                        cursor.execute("SELECT phone FROM Restaurant WHERE name = ?", (group_orders[group_id]["restaurant"],))
                         row = cursor.fetchone()
                         conn.close()
                         if row and row[0]:

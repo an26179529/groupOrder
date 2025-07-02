@@ -28,7 +28,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             phone TEXT
-            menu TEXT,  -- 存 JSON 字串
+            menu TEXT,  
             active BOOLEAN DEFAULT 1
         );
     """)
