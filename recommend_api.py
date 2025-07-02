@@ -9,13 +9,15 @@ app = Flask(__name__)
 def recommend_smart(user_id, restaurant_name, top_n=3):
     conn = sqlite3.connect("group_order.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT menu FROM Restaurant WHERE name = ?", (restaurant_name,))
+    cursor.execute("SELECT menu, phone FROM Restaurant WHERE name = ?", (restaurant_name,))
     row = cursor.fetchone()
     if not row:
         conn.close()
         return "❌ 查無此餐廳"
 
     menu_items = list(json.loads(row[0]).keys())
+    phone_number = row[1] if len(row) > 1 else None
+
     if not menu_items:
         conn.close()
         return f"📭 餐廳「{restaurant_name}」目前沒有菜單"
@@ -38,6 +40,8 @@ def recommend_smart(user_id, restaurant_name, top_n=3):
     text = f"🤖 根據你在「{restaurant_name}」的紀錄，推薦：\n"
     for item, freq in rows:
         text += f"- {item}（共點過 {freq} 次）\n"
+    if phone_number:
+        text += f"\n☎️ 餐廳電話：{phone_number}"
     return text.strip()
 
 # ======== API 路由 ========

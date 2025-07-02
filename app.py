@@ -287,6 +287,7 @@ def handle_message(event):
                 reply_text = f"✅ 訂單結束！{group_orders[group_id]['restaurant']} 統計如下：\n"
                 for item, qty in summary.items():
                     reply_text += f"- {item}: {qty} 份\n"
+                reply_text += "店家電話號碼：" + group_orders[group_id].get("phone", "無資料")
             del group_orders[group_id]
 
     elif text in ["/restaurants", "查餐廳"]:
