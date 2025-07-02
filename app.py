@@ -2,6 +2,7 @@ import os
 import json
 import sqlite3
 import traceback
+import requests
 from flask import Flask, request, abort
 from dotenv import load_dotenv
 from database import init_db, insert_default_restaurants
@@ -295,11 +296,21 @@ def handle_message(event):
         if event.source.type == "group":
             current = group_orders.get(group_id)
             if current and current.get("restaurant"):
-                reply_text = recommend_smart(user_id, current["restaurant"])
+                try:
+                    response = requests.post("http://localhost:5001/api/recommend", json={
+                        "user_id": user_id,
+                        "restaurant_name": current["restaurant"]
+                    })
+                    result = response.json()
+                    reply_text = result.get("recommendations", "⚠️ 推薦失敗")
+                except Exception as e:
+                    print("❌ 呼叫推薦 API 失敗：", e)
+                    reply_text = "⚠️ 推薦服務錯誤"
             else:
                 reply_text = recommend_group_items(group_id)
         else:
             reply_text = recommend_menu_items(user_id)
+
 
     else:
         reply_text = f"你說的是：{text}"
