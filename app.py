@@ -287,8 +287,18 @@ def handle_message(event):
                 reply_text = f"✅ 訂單結束！{group_orders[group_id]['restaurant']} 統計如下：\n"
                 for item, qty in summary.items():
                     reply_text += f"- {item}: {qty} 份\n"
-                reply_text += "店家電話號碼：" + group_orders[group_id].get("phone", "無資料")
-            del group_orders[group_id]
+                try:
+                        conn = sqlite3.connect("group_order.db")
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT phone FROM Restaurant WHERE name = ?", (restaurant_name,))
+                        row = cursor.fetchone()
+                        conn.close()
+                        if row and row[0]:
+                            reply_text += f"\n☎️ 餐廳電話：{row[0]}"
+                except Exception as e:
+                    print("❌ 查詢餐廳電話失敗：", e)
+                del group_orders[group_id]
+
 
     elif text in ["/restaurants", "查餐廳"]:
         reply_text = get_restaurant_list()
