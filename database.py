@@ -102,6 +102,44 @@ def insert_default_restaurants():
     conn.close()
     print("✅ 預設餐廳建立完成")
 
+def insert_test_orders():
+    conn = sqlite3.connect("group_order.db")
+    cursor = conn.cursor()
+
+    user_id = "U_TEST123"
+    user_name = "測試用戶"
+
+    # 確保 User 資料存在
+    cursor.execute("INSERT OR IGNORE INTO User (id, name, created_at) VALUES (?, ?, datetime('now'))", (user_id, user_name))
+
+    # 取得「鈴蘭美食」餐廳 ID
+    cursor.execute("SELECT id FROM Restaurant WHERE name = ?", ("鈴蘭美食",))
+    row = cursor.fetchone()
+    if not row:
+        print("❌ 鈴蘭美食餐廳不存在")
+        return
+    restaurant_id = row[0]
+
+    # 模擬幾筆點餐記錄
+    orders = [
+        ("香酥雞腿飯", 2),
+        ("雞排飯", 1),
+        ("香酥雞腿飯", 1),
+        ("排骨飯", 3),
+    ]
+
+    for item, qty in orders:
+        cursor.execute("""
+            INSERT INTO OrderRecord (user_id, restaurant_id, item, quantity, created_at)
+            VALUES (?, ?, ?, ?, datetime('now', '-5 days'))
+        """, (user_id, restaurant_id, item, qty))
+
+    conn.commit()
+    conn.close()
+    print("✅ 測試點餐紀錄建立完成")
+
+
 if __name__ == "__main__":
     init_db()
     insert_default_restaurants()
+    insert_test_orders()

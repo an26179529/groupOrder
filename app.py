@@ -117,6 +117,45 @@ def recommend_menu_items(user_id, top_n=3):
         for item, freq in rows:
             text += f"- {item}（共被點過 {freq} 次）\n"
         return text.strip()
+    
+def recommend_smart(user_id, restaurant_name, top_n=3):
+    conn = sqlite3.connect("group_order.db")
+    cursor = conn.cursor()
+
+    # Step 1: 取得餐廳菜單
+    cursor.execute("SELECT menu FROM Restaurant WHERE name = ?", (restaurant_name,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return "❌ 查無此餐廳"
+
+    menu_items = list(json.loads(row[0]).keys())
+    if not menu_items:
+        conn.close()
+        return f"📭 餐廳「{restaurant_name}」目前沒有菜單"
+
+    # Step 2: 查詢使用者歷史紀錄（限這家餐廳也有的品項）
+    cursor.execute("""
+        SELECT item, COUNT(*) as freq
+        FROM OrderRecord
+        WHERE user_id = ?
+        GROUP BY item
+        HAVING item IN ({})
+        ORDER BY freq DESC
+        LIMIT ?
+    """.format(",".join("?" * len(menu_items))), (user_id, *menu_items, top_n))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Step 3: 回傳推薦結果
+    if not rows:
+        return f"📭 你在餐廳「{restaurant_name}」沒有相關點餐紀錄"
+    text = f"🤖 根據你在「{restaurant_name}」的紀錄，推薦：\n"
+    for item, freq in rows:
+        text += f"- {item}（共點過 {freq} 次）\n"
+    return text.strip()
+
 
 def recommend_group_items(group_id, top_n=3):
     conn = sqlite3.connect("group_order.db")
@@ -254,7 +293,11 @@ def handle_message(event):
 
     elif text == "/recommend":
         if event.source.type == "group":
-            reply_text = recommend_group_items(group_id)
+            current = group_orders.get(group_id)
+            if current and current.get("restaurant"):
+                reply_text = recommend_smart(user_id, current["restaurant"])
+            else:
+                reply_text = recommend_group_items(group_id)
         else:
             reply_text = recommend_menu_items(user_id)
 
